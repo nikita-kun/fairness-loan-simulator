@@ -1,0 +1,331 @@
+<html>
+<head>
+<title>Attack discrimination with smarter machine learning v1.1</title>
+<link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,700"
+      rel="stylesheet" /><style>
+
+
+body {
+  font: 11pt Roboto;
+  font-weight: 300;
+  margin-left: 60px;
+  margin-top:20px;
+  margin-bottom: 80px;
+}
+td {
+  font-size: 10pt;
+}
+ul {
+  line-height: 180%;
+}
+h1 {
+  font-size: 30px;
+  font-weight: 300;
+}
+.thin {
+  width: 170px;
+}
+.annotation {
+  color: #a00;
+  font-size: 10pt;
+  visibility: hidden;
+  stroke: #d00;
+  stroke-width: 5;
+  fill:none;
+}
+.prose {
+  width: 600px;
+  margin-bottom: 60px;
+}
+.demo {
+  font: 10pt;
+  color: #fff;
+  padding: 6px;
+  border: 0;
+  border-radius: 4px;
+  box-shadow: none;
+  margin-bottom: 6px;
+  width: 140px;
+  background: #a00;
+}
+.broken {
+  color: #f00;
+}
+.readout {
+  font-weight: 700;
+}
+.title {
+  font-weight: 700;
+}
+.big-label {
+  font-size: 16pt;
+}
+.figure-title {
+  font-size: 24px;
+  font-weight: 400;
+}
+.figure-caption {
+  font-weight:100;
+  margin-bottom: 20px;
+}
+.histogram-axis text {
+  font: 9pt Roboto;
+  font-weight: 100;
+  color: #000;
+}
+.histogram-legend {
+  margin-top: 16px;
+}
+.instructions {
+  font-weight: 700;
+}
+.correctness-label {
+  font-size: 9pt;
+  font-weight: 700;
+  color: #000;
+}
+.explanation {
+  font-size: 9pt;
+  font-weight: 100;
+  color: #ccc;
+}
+.pie-label {
+  font-size: 9pt;
+  font-weight: 700;
+  color: #000;
+}
+.pie-number {
+  font-size: 9pt;
+  font-weight: 300;
+  color: #000;
+}
+.legend-label {
+  font-size: 8pt;
+  font-weight: 300;
+  color: #666;
+}
+.bold-label {
+  font-size: 10pt;
+  font-weight: 700;
+}
+.margin-text {
+  font-size: 9pt;
+  font-weight: 300;
+  color: #666;
+}
+.margin-bold {
+  font-size: 9pt;
+  font-weight: 700;
+}
+.domain {
+  display: none;
+}
+.profit-readout {
+  margin-left: 10px;
+}
+
+#profit-title {
+  font-size: 18pt;
+}
+#total-profit {
+  font-size: 18pt;
+  font-weight: 700;
+}
+#top-sidebar {
+  position: absolute;
+  left: 650px;
+  width: 200px;
+  font-size: 10pt;
+  color: #555
+}
+
+</style>
+</head>
+<body onload="main()">
+  <script src="https://www.gstatic.com/external_hosted/d3/v5/d3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jstat@latest/dist/jstat.min.js"></script> 
+  <script src="bundle.js"></script>
+
+
+  <h1 id="title-section">Attacking discrimination with smarter machine learning v1.1</h1>
+  
+  <div>
+  		<h2>Simulation parameters (not included in <a href="https://research.google.com/bigpicture/attacking-discrimination-in-ml/">the original simulator</a>)</h2>  	
+  		<form>
+
+	  	<p><input id="tprValue" name="tprValue">True positive profit</input></p>
+	  	<p><input id="fprValue" name="fprValue">False positive profit</input></p>
+	  	
+	  	<table>
+	  		<tr>
+		  		<th>Group</th>
+		  		<th>Size</th>
+		  		<th>alpha</th>
+		  		<th>beta</th>
+	  		</tr>
+	  		<tr>
+	  			<td>Blue</td>
+	  			<td><input id="n0" name="n0"></input></td>
+	  			<td><input id="a0" name="a0"></input></td>
+	  			<td><input id="b0" name="b0"></input></td>
+	  		</tr>
+	  		<tr>
+	  			<td>Orange</td>
+	  			<td><input id="n1" name="n1"></input></td>
+	  			<td><input id="a1" name="a1"></input></td>
+	  			<td><input id="b1" name="b1"></input></td>
+	  		</tr>
+	  	</table>
+
+	  	<p><select id="render" name="render">
+	  			<option value="1">visualize</option>
+	  			<option value="0">don't visualize (larger populations)</option>
+	  		</select>
+  
+	  	
+	  	<input type="submit" value="Simulate"></input> 
+	  	<button type=button id="startBatch">Simulate all strategies (output at the bottom)</button>
+  	</form>
+  	
+  </div>
+  
+
+<br>
+  <div class="figure-title">
+    Simulating loan decisions for different groups
+  </div>
+  <div class="figure-caption">
+  	Groups of people with their payout probabilities (x-axis) are sampled from <a href="https://en.wikipedia.org/wiki/Beta_distribution"> Beta distribution with parameters [a,b]</a>.<br>
+  
+    Drag the black threshold bars left or right to change payout probability cut-offs for groups.<br>
+    Click on different preset loan strategies.
+  </div>
+  <table>
+    <tr>
+      <td rowspan=4 width=200 valign="top">
+        <div class="big-label" style="margin-top:3px">Loan Strategy</div>
+        <span class="margin-text">
+          Maximize profit with:
+          <br><br><br>
+          <button class="demo" id="max-profit">MAX PROFIT</button>
+          <br>No constraints
+          <p><br>
+          <button class="demo" id="group-unaware">GROUP UNAWARE</button>
+          <br>
+          Blue and orange thresholds<br>are the same
+          <p><br>
+          <button class="demo" id="demographic-parity">DEMOGRAPHIC PARITY</button>
+          <br>
+          Same fractions blue / orange loans
+          <p><br>
+          <button class="demo" id="equal-opportunity">EQUAL OPPORTUNITY</button>
+          <br>
+          Same fractions blue / orange loans<br>
+          to people who can pay them off
+          <br><br><br>
+
+          <div class="thin annotation max-profit-annotation">
+            <div class="title">Max Profit</div>
+            The most profitable, since there are no constraints.
+            But the two groups have different thresholds, meaning they
+            are held to different standards.
+          </div>
+          <div class="thin annotation group-unaware-annotation">
+            <div class="title">Group Unaware</div>
+            Both groups have the same threshold, but the orange group has
+            been given fewer loans overall. Among people
+            who would pay back a loan, the orange group is also at a
+            disadvantage.
+          </div>
+          <div class="thin annotation demographic-parity-annotation">
+            <div class="title">Demographic Parity</div>
+            The number of loans given to each group is the same, but among people
+            who would pay back a loan, the blue group is at a
+            disadvantage.
+          </div>
+          <div class="thin annotation equal-opportunity-annotation">
+            <div class="title">Equal Opportunity</div>
+            Among people
+            who would pay back a loan, blue and orange groups do equally well.
+            This choice is almost as profitable as demographic parity,
+            and about as many people get loans overall.
+          </div>
+        </span>
+      </td>
+      <td colspan=3>
+
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+        <div class="big-label">Blue Population</div>
+        <br><br>
+        <div id="histogram0"></div>
+        <div id="histogram-legend0" class="histogram-legend"></div>
+      </td>
+      <td width=20>&nbsp;</td>
+      <td valign="top">
+        <!-- start upper right content label -->
+        <div class="big-label" style="margin-left:10px">Orange Population</div>
+        <!-- end upper right content label -->
+        <br><br>
+        <!-- start upper right content -->
+        <div id="histogram1"></div>
+        <div id="histogram-legend1" class="histogram-legend"></div>
+        <!-- end upper right content -->
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+         <div id="profit-title" style="position:relative">
+           Total profit = <span id="total-profit"></span>
+            <div style="position:absolute;left:-20;top:-20">
+            <svg>
+            <rect class="annotation max-profit-annotation"
+             x="10" y="10" width="430" height="50" rx="20" ry="20"
+            />
+            </svg>
+            </div>
+          </div>
+		  <div id="profit-title" style="position:relative">
+           <p>People discriminated = <span id="total-discrimination"></span></p>
+           <p>Discrimination rate = <span id="total-discrimination-rate"></span></p>
+           <p>Group loan thresholds = [<span id="threshold0"></span>, <span id="threshold1"></span>]</p>
+            <div style="position:absolute;left:-20;top:-20">
+            <svg>
+            <rect class="annotation max-profit-annotation"
+             x="10" y="10" width="430" height="50" rx="20" ry="20"
+            />
+            </svg>
+            </div>
+          </div>
+
+
+      </td>
+      <td width=20>&nbsp;</td>
+      <td valign="top">
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <!-- start lower left content -->
+        <div id="correct0"></div>
+        <div id="pies0"></div>
+        <div class="profit-readout">Profit: <span class="readout" id="profit0"></span></div>
+        <!-- end lower left content-->
+      </td>
+      <td width=20>&nbsp;</td>
+      <td valign="top">
+        <div id="correct1"></div>
+        <div id="pies1"></div>
+        <div class="profit-readout">Profit: <span class="readout" id="profit1"></span></div>
+      </td>
+    </tr>
+  </table>
+  <br><br>
+  
+<hr>
+<div id="batch"></div>
+    
+</body>
+</html>
