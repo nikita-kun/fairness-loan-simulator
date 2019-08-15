@@ -7,7 +7,7 @@ function readParam(name, defaultValue){
 // Entry point for interactive diagrams.
 function main() {  
   
-  /* Chi squared scaled distributions */
+  /* Beta distribution parameters */
   /* Repay outcome is purely probabilistic */
   var a0 = readParam("a0",1);
   var a1 = readParam("a1",1.2);
@@ -132,7 +132,7 @@ function main() {
       element.innerHTML = '' + value;
       element.style.color = value < 0 ? '#f00' : '#000';
     }
-    //display('single-profit0', singleModel.profit);
+
     display('threshold0', comparisonExample0.threshold.toFixed(0));
     display('threshold1', comparisonExample1.threshold.toFixed(0));
     display('profit0', comparisonExample0.profit);
